@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Bullets</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Roboto:wght@300;400;500&family=Montserrat:wght@400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        :root {
+            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --radius-lg: 18px;
+            --radius-md: 14px;
+            --radius-sm: 8px;
+            --blur: 16px;
+            --saturate: 140%;
+            --bg-base: #0F1115;
+            --bg-mesh: radial-gradient(circle at 50% 0%, #1a1d24 0%, #0F1115 60%);
+            --glass-panel: rgba(255, 255, 255, 0.03);
+            --glass-overlay: rgba(15, 17, 21, 0.85);
+            --border: rgba(255, 255, 255, 0.06);
+            --border-hover: rgba(255, 255, 255, 0.12);
+            --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            --text-primary: #f0f0f0;
+            --text-secondary: #8a8d93;
+            --text-placeholder: #5a5d63;
+            --accent: #ffffff;
+            --accent-fg: #000000;
+            --accent-glow: rgba(255, 255, 255, 0.1);
+            --shadow-soft: 0 12px 32px rgba(0, 0, 0, 0.3);
+            --shadow-float: 0 8px 24px rgba(0, 0, 0, 0.4);
+            --item-hover: rgba(255, 255, 255, 0.04);
+            --danger: #ff453a;
+            --danger-bg: rgba(255, 69, 58, 0.1);
+            --spacing-unit: 24px;
+            --success-border: #4ade80;
+        }
+
+        [data-theme="snow"] {
+            --bg-base: #F6F6F7;
+            --bg-mesh: radial-gradient(circle at 50% 0%, #ffffff 0%, #F6F6F7 60%);
+            --glass-panel: rgba(255, 255, 255, 0.65);
+            --glass-overlay: rgba(246, 246, 247, 0.85);
+            --border: rgba(0, 0, 0, 0.06);
+            --text-primary: #1C1C1E;
+            --text-secondary: #6e6e73;
+            --accent: #1C1C1E;
+            --accent-fg: #ffffff;
+            --success-border: #16a34a;
+        }
+        [data-theme="forest"] {
+            --bg-base: #09120D;
+            --bg-mesh: radial-gradient(circle at 50% 0%, #13241A 0%, #09120D 60%);
+            --glass-panel: rgba(255, 255, 255, 0.03);
+            --text-primary: #e8f0ec;
+            --text-secondary: #7e9386;
+            --accent: #4ade80;
+            --accent-fg: #000000;
+        }
+        [data-theme="ocean"] {
+            --bg-base: #080D14;
+            --bg-mesh: radial-gradient(circle at 50% 0%, #121D2A 0%, #080D14 60%);
+            --glass-panel: rgba(255, 255, 255, 0.03);
+            --text-primary: #e6eff8;
+            --text-secondary: #7a8d9e;
+            --accent: #38bdf8;
+            --accent-fg: #000000;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body { font-family: var(--font-main); background: var(--bg-base); background-image: var(--bg-mesh); color: var(--text-primary); height: 100vh; display: flex; overflow: hidden; }
+
+        .app-container { display: flex; width: 100vw; height: 100vh; z-index: 1; position: relative; }
+
+        .sidebar {
+            width: 280px; flex-shrink: 0; background: var(--glass-panel); backdrop-filter: blur(var(--blur)) saturate(var(--saturate));
+            border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: var(--spacing-unit) 16px;
+            box-shadow: var(--glass-highlight); z-index: 100; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .brand { font-size: 1.1rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: var(--spacing-unit); padding: 0 8px; display: flex; justify-content: space-between; align-items: center; }
+        .nav-section { flex-grow: 1; overflow-y: auto; padding-right: 4px; }
+        .segmented-control { display: flex; background: rgba(0,0,0,0.2); border-radius: var(--radius-sm); padding: 4px; gap: 4px; margin-bottom: 12px; }
+        .segment-btn { flex: 1; background: transparent; border: none; color: var(--text-secondary); padding: 10px 0; border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
+        .segment-btn.active { background: var(--glass-panel); color: var(--text-primary); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+
+        .folder-group { margin-bottom: 12px; }
+        .folder-header { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-radius: var(--radius-sm); color: var(--text-secondary); font-size: 0.8rem; font-weight: 500; cursor: pointer; }
+        .folder-header:hover { color: var(--text-primary); background: var(--item-hover); }
+        .note-list { padding-left: 8px; margin-top: 4px; display: none; flex-direction: column; gap: 2px; }
+        .folder-group.active .note-list { display: flex; }
+        .note-item { padding: 10px 12px; border-radius: var(--radius-sm); font-size: 0.85rem; color: var(--text-secondary); cursor: pointer; display: flex; justify-content: space-between; align-items: center; position: relative; border: 1px solid transparent; }
+        .note-item.active { background: var(--accent-glow); color: var(--text-primary); font-weight: 500; }
+
+        .main-view { flex-grow: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; background: transparent; width: 100%; }
+
+        .editor-container { flex-grow: 1; display: none; flex-direction: column; height: 100%; }
+        .editor-container.active { display: flex; }
+        .floating-toolbar { position: absolute; top: var(--spacing-unit); right: var(--spacing-unit); background: var(--glass-panel); backdrop-filter: blur(var(--blur)); border: 1px solid var(--border); border-radius: 30px; padding: 6px 16px; display: flex; align-items: center; gap: 10px; box-shadow: var(--shadow-float); z-index: 20; opacity: 0.3; transition: opacity 0.3s; }
+        .editor-container:hover .floating-toolbar, .floating-toolbar:hover { opacity: 1; }
+        .tool-btn { background: transparent; border: none; color: var(--text-secondary); padding: 8px 12px; border-radius: 20px; cursor: pointer; font-size: 0.8rem; font-weight: 500; }
+        .tool-btn:hover { background: var(--item-hover); color: var(--text-primary); }
+
+        .editor-scroll-area { flex-grow: 1; overflow-y: auto; padding: 100px 5% var(--spacing-unit); display: flex; justify-content: center; }
+        .page-content { width: 100%; max-width: 800px; display: flex; flex-direction: column; padding-bottom: 100px; }
+        .title-input { width: 100%; background: transparent; border: none; color: var(--text-primary); font-size: 2.2rem; font-weight: 600; margin-bottom: 1.5rem; outline: none; font-family: inherit; line-height: 1.4; padding: 10px 0; }
+        .title-input[contenteditable]:empty::before { content: attr(placeholder); color: var(--text-placeholder); pointer-events: none; }
+        #editor { flex-grow: 1; outline: none; font-size: 1.05rem; line-height: 1.7; color: var(--text-primary); min-height: 60vh; }
+
+        /* Calendar View */
+        .calendar-container { display: none; flex-direction: column; height: 100%; padding: var(--spacing-unit); overflow-y: auto; scroll-behavior: smooth; }
+        .calendar-container.active { display: flex; }
+        
+        .calendar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+        .calendar-title { font-size: 1.5rem; font-weight: 600; }
+        .calendar-nav { display: flex; gap: 8px; }
+
+        .calendar-stats { display: flex; align-items: center; gap: 20px; margin-bottom: var(--spacing-unit); background: var(--glass-panel); padding: 16px 24px; border-radius: var(--radius-md); border: 1px solid var(--border); }
+        .stat-group { display: flex; gap: 20px; flex-grow: 1; }
+        .stat-item { display: flex; flex-direction: column; }
+        .stat-val { font-size: 1.2rem; font-weight: 600; color: var(--text-primary); }
+        .stat-lbl { font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; }
+        
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; flex-grow: 1; min-height: 600px; }
+        .calendar-day-label { display: block; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); text-align: center; padding-bottom: 8px; }
+        
+        .calendar-day { background: var(--glass-panel); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px; display: flex; flex-direction: column; gap: 8px; cursor: pointer; transition: all 0.2s; position: relative; min-height: 120px; }
+        .calendar-day:hover { border-color: var(--border-hover); background: var(--item-hover); transform: translateY(-2px); }
+        .calendar-day.today { border-color: var(--accent); }
+        .calendar-day.all-done { border-color: var(--success-border); box-shadow: inset 0 0 10px rgba(74, 222, 128, 0.1); }
+        .calendar-day.other-month { display: none; }
+        
+        .day-num { font-size: 0.9rem; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 6px; }
+        .day-name-label { font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+        
+        .day-tasks { flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; gap: 4px; }
+        .task-indicator { font-size: 0.65rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); }
+        .task-indicator.done { text-decoration: line-through; opacity: 0.4; }
+
+        .modal-overlay { position: fixed; inset: 0; background: var(--glass-overlay); backdrop-filter: blur(var(--blur)); z-index: 1000; display: none; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.2s; }
+        .modal-overlay.active { display: flex; opacity: 1; }
+        .modal-content { background: var(--bg-base); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px; width: 100%; max-width: 420px; box-shadow: var(--shadow-float); }
+        .input-text { width: 100%; background: rgba(0,0,0,0.1); border: 1px solid var(--border); color: var(--text-primary); padding: 12px; border-radius: var(--radius-sm); font-size: 0.9rem; outline: none; margin-bottom: 16px; }
+        .btn-primary { background: var(--accent); color: var(--accent-fg); border: none; padding: 12px 16px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; cursor: pointer; width: 100%; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-primary); padding: 10px 16px; border-radius: var(--radius-sm); font-size: 0.85rem; cursor: pointer; width: 100%; }
+
+        .todo-item { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding: 8px; border-radius: 8px; background: var(--item-hover); }
+        .todo-item input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+        .todo-item .task-text { flex-grow: 1; font-size: 0.9rem; }
+        .todo-item.done .task-text { text-decoration: line-through; opacity: 0.5; }
+
+        /* Bottom Bar and Mobile Overrides */
+        .mobile-bottom-bar { display: none; align-items: center; justify-content: space-between; padding: 0 16px; background: var(--glass-panel); backdrop-filter: blur(var(--blur)); border-top: 1px solid var(--border); z-index: 110; height: 70px; position: fixed; bottom: 0; left: 0; right: 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.2); }
+        .mobile-bottom-bar .brand-label { font-weight: 600; letter-spacing: 0.1em; font-size: 0.8rem; text-transform: uppercase; cursor: pointer; padding: 10px; }
+        .mobile-bottom-bar .mobile-mode-switcher { display: flex; gap: 4px; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 12px; }
+        .mobile-mode-btn { border: none; background: transparent; color: var(--text-secondary); font-size: 0.7rem; font-weight: 600; padding: 8px 12px; border-radius: 8px; }
+        .mobile-mode-btn.active { background: var(--accent); color: var(--accent-fg); }
+        
+        .mobile-dir-trigger { display: none; background: transparent; border: 1px solid var(--border); color: var(--text-primary); font-size: 0.7rem; font-weight: 700; border-radius: 8px; padding: 8px 12px; cursor: pointer; height: 40px; align-items: center; justify-content: center; }
+
+        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 95; }
+        .sidebar-overlay.active { display: block; }
+
+        .mobile-close-btn { display: none; }
+
+        @media (max-width: 1024px) {
+            .mobile-bottom-bar { display: flex; }
+            .sidebar { 
+                position: fixed; left: 0; top: 0; bottom: 0; 
+                transform: translateX(-100%); width: 100vw !important; max-width: 100% !important; 
+                border-right: none; 
+                background: var(--bg-base) !important; 
+                backdrop-filter: none !important; 
+                -webkit-backdrop-filter: none !important;
+                filter: none !important;
+                z-index: 120; 
+                border-radius: 0 !important;
+                padding-top: calc(env(safe-area-inset-top, 20px) + 20px);
+            }
+            .sidebar.open { transform: translateX(0); }
+            .calendar-grid { grid-template-columns: repeat(2, 1fr); }
+            .calendar-day-label { display: none !important; }
+            
+            .floating-toolbar { bottom: 90px; top: auto; right: 50%; transform: translateX(50%); width: 92%; justify-content: center; opacity: 1; flex-wrap: wrap; height: auto; padding: 12px; border-radius: 20px; gap: 8px; backdrop-filter: blur(20px); border: 1px solid var(--border-hover); }
+            .stat-group { flex-direction: column; gap: 10px; }
+            .main-view { width: 100vw; height: calc(100vh - 70px); padding-bottom: 20px; padding-top: env(safe-area-inset-top, 20px); }
+            .editor-scroll-area { padding-top: 40px; padding-bottom: 120px; }
+            
+            .title-input { font-size: 1.6rem; padding: 5px 0; margin-bottom: 0.8rem; }
+            #editor { font-size: 0.95rem; line-height: 1.6; }
+            .stat-val { font-size: 1rem; }
+            .calendar-title { font-size: 1.2rem; }
+            .day-num { font-size: 0.9rem; }
+            .calendar-day { min-height: 100px; }
+
+            .mobile-close-btn { display: flex; background: transparent; border: none; color: var(--text-primary); font-size: 1.5rem; cursor: pointer; padding: 4px; }
+            #theme-selector { height: 48px !important; }
+        }
+    </style>
+</head>
+<body data-theme="midnight" onclick="closeAllMenus(event)">
+
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar(event)"></div>
+
+    <!-- About Pop-Up -->
+    <div class="modal-overlay" id="about-modal">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-title" style="font-weight: 600; margin-bottom: 16px; font-size: 1.3rem; letter-spacing: 0.05em;">ABOUT BULLETS</div>
+            <p style="font-size: 0.95rem; line-height: 1.6; color: var(--text-primary); margin-bottom: 24px; font-weight: 300;">
+                Bullets is an offline note taking web-app. All your notes and to-do actions are saved to your device and nowhere else. 
+                Make notes and save them to directories or add to-do items to a custom calendar. 
+                All information will persist, forever, for free.
+            </p>
+            <button class="btn-primary" onclick="dismissAbout()">Get Started</button>
+        </div>
+    </div>
+
+    <div class="mobile-bottom-bar">
+        <div class="brand-label" onclick="changeMode('quick')">BULLETS</div>
+        <div class="mobile-mode-switcher">
+            <button class="mobile-mode-btn" id="m-mode-quick" onclick="changeMode('quick')">Quick</button>
+            <button class="mobile-mode-btn" id="m-mode-todo" onclick="changeMode('todo')">To-Do</button>
+        </div>
+        <button id="mobile-clear-btn" class="mobile-dir-trigger" style="display: none; border-color: var(--danger); color: var(--danger);" onclick="clearQuickNote()">CLEAR</button>
+        <button id="mobile-dir-btn" class="mobile-dir-trigger" style="display: none;" onclick="toggleSidebar(event)">DIR</button>
+    </div>
+
+    <div class="modal-overlay" id="onboarding">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-title" style="font-weight: 600; margin-bottom: 20px; font-size: 1.2rem;">Workspace Init</div>
+            <input type="text" id="user-name" class="input-text" placeholder="Executive Alias" autocomplete="off">
+            <button class="btn-primary" onclick="saveUser()">Authenticate</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="folder-modal" onclick="closeModal('folder-modal')">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-title" style="font-weight: 600; margin-bottom: 20px;">New Directory</div>
+            <input type="text" id="folder-name" class="input-text" placeholder="Directory Name" autocomplete="off">
+            <button class="btn-primary" onclick="confirmCreateFolder()" style="margin-bottom: 8px;">Create</button>
+            <button class="btn-outline" onclick="closeModal('folder-modal')">Cancel</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="todo-modal" onclick="closeModal('todo-modal')">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-title" id="todo-date-title" style="font-weight: 600; margin-bottom: 20px;">Tasks</div>
+            <div id="todo-list-container" style="max-height: 350px; overflow-y: auto; margin-bottom: 20px; padding-right: 5px;"></div>
+            <div style="display: flex; gap: 8px; margin-bottom: 20px;">
+                <input type="text" id="new-task-input" class="input-text" placeholder="Action item..." style="margin-bottom: 0;">
+                <button class="btn-primary" onclick="addTask()" style="width: auto;">Add</button>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                <button class="btn-outline" style="font-size: 0.8rem; padding: 10px;" onclick="copyDayTasks()">Copy List</button>
+                <button class="btn-outline" style="font-size: 0.8rem; padding: 10px;" onclick="exportDayTasks()">Export</button>
+            </div>
+            <button class="btn-outline" onclick="closeModal('todo-modal')" style="width: 100%;">Close</button>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <nav class="sidebar" id="sidebar" onclick="event.stopPropagation()">
+            <div class="brand">
+                <span>Bullets</span>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <button class="tool-btn" id="folder-add-btn" onclick="openModal('folder-modal')" style="padding: 4px;">+</button>
+                    <button class="mobile-close-btn" onclick="toggleSidebar(event)">✕</button>
+                </div>
+            </div>
+            
+            <div class="nav-section" id="nav-section"></div>
+
+            <div style="margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border);">
+                <div class="segmented-control desktop-only">
+                    <button class="segment-btn" id="mode-quick" onclick="changeMode('quick')">Quick</button>
+                    <button class="segment-btn" id="mode-standard" onclick="changeMode('standard')">Standard</button>
+                    <button class="segment-btn" id="mode-todo" onclick="changeMode('todo')">To-Do</button>
+                </div>
+                <select id="theme-selector" class="input-text" onchange="changeTheme(this.value)" style="height: 48px; -webkit-appearance: none; margin-bottom: 12px;">
+                    <option value="midnight">Midnight (Dark)</option>
+                    <option value="snow">Snow (Light)</option>
+                    <option value="forest">Forest</option>
+                    <option value="ocean">Ocean</option>
+                </select>
+                
+                <div class="sidebar-footer">
+                    <span class="user-tag" id="user-display">ID: ---</span>
+                    <button class="tool-btn" style="font-size: 0.7rem;" onclick="switchUser()">SWITCH</button>
+                </div>
+            </div>
+        </nav>
+
+        <main class="main-view">
+            <div class="editor-container" id="editor-view">
+                <div class="floating-toolbar" id="toolbar">
+                    <button class="tool-btn" onclick="copyNotes()">Copy</button>
+                    <button class="tool-btn" onclick="downloadImage()">Export</button>
+                    <button class="tool-btn" onclick="exportToOutlook()">Outlook</button>
+                </div>
+
+                <div class="editor-scroll-area" id="capture-area">
+                    <div class="page-content">
+                        <div id="note-title" class="title-input" contenteditable="true" placeholder="Untitled Document" spellcheck="false"></div>
+                        <div id="editor" contenteditable="true" spellcheck="false"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="calendar-container" id="calendar-view">
+                <div class="calendar-header">
+                    <div class="calendar-title" id="calendar-month-year">Month Year</div>
+                    <div class="calendar-nav">
+                        <button class="tool-btn" onclick="moveMonth(-1)">←</button>
+                        <button class="tool-btn" onclick="moveMonth(1)">→</button>
+                    </div>
+                </div>
+                <div class="calendar-stats">
+                    <div class="stat-group">
+                        <div class="stat-item"><span class="stat-val" id="stat-done">0</span><span class="stat-lbl">Done</span></div>
+                        <div class="stat-item"><span class="stat-val" id="stat-todo">0</span><span class="stat-lbl">To-Do</span></div>
+                        <div class="stat-item"><span class="stat-val" id="stat-progress">0%</span><span class="stat-lbl">Progress</span></div>
+                    </div>
+                    <select id="stat-range" class="input-text" onchange="renderCalendar()" style="width: auto; margin-bottom: 0; padding: 6px 12px; font-size: 0.75rem;">
+                        <option value="day">Daily</option>
+                        <option value="month" selected>Monthly</option>
+                        <option value="year">Yearly</option>
+                    </select>
+                </div>
+                <div class="calendar-grid" id="calendar-grid"></div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const editor = document.getElementById('editor');
+        const titleEl = document.getElementById('note-title');
+        const navSection = document.getElementById('nav-section');
+        let notes = JSON.parse(localStorage.getItem('bullets_notes')) || [];
+        let folders = JSON.parse(localStorage.getItem('bullets_folders')) || [{id: 'default', name: 'Records'}];
+        let todos = JSON.parse(localStorage.getItem('bullets_todos')) || {};
+        
+        let currentNoteId = null;
+        let currentFolderId = localStorage.getItem('bullets_current_folder') || 'default';
+        let currentMode = 'standard';
+        let selectedDateKey = null;
+        let viewDate = new Date();
+
+        window.onload = () => {
+            const user = JSON.parse(localStorage.getItem('app_user'));
+            const savedMode = localStorage.getItem('bullets_mode') || 'standard';
+            const savedTheme = localStorage.getItem('bullets_theme') || 'midnight';
+            const hasSeenAbout = sessionStorage.getItem('bullets_seen_about');
+            
+            document.body.setAttribute('data-theme', savedTheme);
+            document.getElementById('theme-selector').value = savedTheme;
+
+            // Handle About Pop-up sequence
+            if (!hasSeenAbout) {
+                openModal('about-modal');
+            } else if (!user) {
+                openModal('onboarding');
+            } else {
+                initSystem();
+            }
+
+            if (user) {
+                document.getElementById('user-display').innerText = 'ID: ' + user.name.toUpperCase();
+                changeMode(savedMode, true);
+            }
+        };
+
+        window.dismissAbout = () => {
+            closeModal('about-modal');
+            sessionStorage.setItem('bullets_seen_about', 'true');
+            const user = JSON.parse(localStorage.getItem('app_user'));
+            if (!user) {
+                openModal('onboarding');
+            } else {
+                initSystem();
+            }
+        };
+
+        window.toggleSidebar = (e) => { 
+            if (e) e.stopPropagation(); 
+            const sb = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sb.classList.toggle('open'); 
+            overlay.classList.toggle('active');
+        };
+
+        window.closeAllMenus = (e) => { 
+            const sb = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (sb && sb.classList.contains('open')) {
+                sb.classList.remove('open');
+                overlay.classList.remove('active');
+            }
+            document.querySelectorAll('.context-menu').forEach(m=>m.classList.remove('show')); 
+        };
+
+        window.changeMode = (mode, isInit = false) => {
+            currentMode = mode;
+            localStorage.setItem('bullets_mode', mode);
+            
+            document.querySelectorAll('.segment-btn').forEach(b => b.classList.remove('active'));
+            const dBtn = document.getElementById(`mode-${mode}`);
+            if(dBtn) dBtn.classList.add('active');
+
+            document.querySelectorAll('.mobile-mode-btn').forEach(b => b.classList.remove('active'));
+            const mBtn = document.getElementById(`m-mode-${mode}`);
+            if(mBtn) mBtn.classList.add('active');
+
+            const dirBtn = document.getElementById('mobile-dir-btn');
+            const clearBtn = document.getElementById('mobile-clear-btn');
+            
+            if (window.innerWidth <= 1024) {
+                if (dirBtn) dirBtn.style.display = (mode === 'standard') ? 'flex' : 'none';
+                if (clearBtn) clearBtn.style.display = (mode === 'quick') ? 'flex' : 'none';
+            }
+
+            if (!isInit) {
+                let defaults = { quick: 'midnight', standard: 'forest', todo: 'ocean' };
+                if (window.innerWidth <= 1024 && mode === 'quick') {
+                    defaults.quick = 'forest';
+                }
+                changeTheme(defaults[mode]);
+                document.getElementById('theme-selector').value = defaults[mode];
+            }
+
+            const nav = document.getElementById('nav-section');
+            const add = document.getElementById('folder-add-btn');
+            const eView = document.getElementById('editor-view');
+            const cView = document.getElementById('calendar-view');
+
+            if (mode === 'todo') {
+                eView.classList.remove('active');
+                cView.classList.add('active');
+                renderCalendar();
+                if (window.innerWidth <= 1024) {
+                    setTimeout(() => {
+                        const todayEl = document.querySelector('.calendar-day.today');
+                        if (todayEl) todayEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 100);
+                }
+            } else {
+                cView.classList.remove('active');
+                eView.classList.add('active');
+                if (mode === 'quick') {
+                    nav.style.display = 'none'; add.style.display = 'none';
+                    loadQuickNote();
+                } else {
+                    nav.style.display = 'block'; add.style.display = '';
+                    resumeStandard();
+                }
+            }
+            if (window.innerWidth <= 1024) closeAllMenus();
+        };
+
+        window.clearQuickNote = () => {
+            if(confirm("Wipe current scratchpad? This cannot be undone.")) {
+                titleEl.innerText = '';
+                editor.innerHTML = '<ul><li><br></li></ul>';
+                autoSave();
+            }
+        };
+
+        function loadQuickNote() {
+            let note = notes.find(n => n.id === 'quick_scratchpad');
+            if (!note) { note = { id: 'quick_scratchpad', folderId: 'hidden', title: '', content: '<ul><li><br></li></ul>' }; notes.push(note); saveState(); }
+            loadNoteData(note.id);
+        }
+
+        function resumeStandard() {
+            const active = notes.filter(n => n.folderId === currentFolderId && n.id !== 'quick_scratchpad');
+            if (active.length > 0) loadNoteData(active[0].id);
+            else createNewNote(currentFolderId);
+            renderNavigation();
+        }
+
+        window.moveMonth = (dir) => {
+            viewDate.setMonth(viewDate.getMonth() + dir);
+            renderCalendar();
+        };
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-grid');
+            grid.innerHTML = '';
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            document.getElementById('calendar-month-year').innerText = `${monthNames[viewDate.getMonth()]} ${viewDate.getFullYear()}`;
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            days.forEach(day => {
+                const dEl = document.createElement('div');
+                dEl.className = 'calendar-day-label';
+                dEl.innerText = day;
+                grid.appendChild(dEl);
+            });
+            const year = viewDate.getFullYear();
+            const month = viewDate.getMonth();
+            const firstDay = (new Date(year, month, 1).getDay() + 6) % 7;
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            let doneCount = 0, todoCount = 0;
+            const range = document.getElementById('stat-range').value;
+            const now = new Date();
+            const todayKey = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateKey = `${year}-${month + 1}-${d}`;
+                const dayName = days[(firstDay + d - 1) % 7];
+                const dayEl = document.createElement('div');
+                dayEl.className = 'calendar-day';
+                if (dateKey === todayKey) dayEl.classList.add('today');
+                const dayTasks = todos[dateKey] || [];
+                const allDone = dayTasks.length > 0 && dayTasks.every(t => t.done);
+                if (allDone) dayEl.classList.add('all-done');
+                dayEl.onclick = () => openTodoModal(dateKey);
+                let taskHtml = '';
+                dayTasks.slice(0, 3).forEach(t => {
+                    taskHtml += `<div class="task-indicator ${t.done?'done':''}">${t.done?'✓ ':''} ${t.text}</div>`;
+                });
+                if(dayTasks.length > 3) taskHtml += `<div style="font-size:0.55rem; opacity:0.5; padding-left:6px;">+ ${dayTasks.length-3} more</div>`;
+                dayEl.innerHTML = `<div class="day-num"><span class="day-name-label">${dayName}</span><span>${d}</span></div><div class="day-tasks">${taskHtml}</div>`;
+                grid.appendChild(dayEl);
+            }
+            Object.keys(todos).forEach(key => {
+                const [y, m, d] = key.split('-').map(Number);
+                let match = false;
+                if (range === 'day') match = key === todayKey;
+                else if (range === 'month') match = y === year && m === (month + 1);
+                else if (range === 'year') match = y === year;
+                if (match) { todos[key].forEach(t => { if(t.done) doneCount++; else todoCount++; }); }
+            });
+            document.getElementById('stat-done').innerText = doneCount;
+            document.getElementById('stat-todo').innerText = todoCount;
+            const total = doneCount + todoCount;
+            const prog = total === 0 ? 0 : Math.round((doneCount/total)*100);
+            document.getElementById('stat-progress').innerText = `${prog}% (${doneCount}/${total})`;
+        }
+
+        window.openTodoModal = (dateKey) => {
+            selectedDateKey = dateKey;
+            document.getElementById('todo-date-title').innerText = `Agenda: ${dateKey}`;
+            renderTodoList();
+            openModal('todo-modal');
+        };
+
+        function renderTodoList() {
+            const container = document.getElementById('todo-list-container');
+            container.innerHTML = '';
+            const list = todos[selectedDateKey] || [];
+            list.forEach((t, idx) => {
+                const div = document.createElement('div');
+                div.className = `todo-item ${t.done?'done':''}`;
+                div.innerHTML = `<input type="checkbox" ${t.done?'checked':''} onchange="toggleTask(${idx})"><span class="task-text">${t.text}</span><button class="tool-btn" onclick="removeTask(${idx})" style="color:var(--danger);">✕</button>`;
+                container.appendChild(div);
+            });
+        }
+
+        window.addTask = () => {
+            const input = document.getElementById('new-task-input');
+            const text = input.value.trim();
+            if(!text) return;
+            if(!todos[selectedDateKey]) todos[selectedDateKey] = [];
+            todos[selectedDateKey].push({text, done: false});
+            input.value = '';
+            saveTodoState();
+        };
+
+        window.copyDayTasks = () => {
+            const list = todos[selectedDateKey] || [];
+            if(list.length === 0) return;
+            const text = list.map(t => `${t.done?'[x]':'[ ]'} ${t.text}`).join('\n');
+            navigator.clipboard.writeText(`Agenda for ${selectedDateKey}:\n\n${text}`);
+        };
+
+        window.exportDayTasks = async () => {
+            const list = todos[selectedDateKey] || [];
+            if(list.length === 0) return;
+
+            if (window.innerWidth <= 1024) {
+                const element = document.querySelector('#todo-modal .modal-content');
+                const theme = document.body.getAttribute('data-theme');
+                const colors = { midnight: '#0F1115', snow: '#F6F6F7', forest: '#09120D', ocean: '#080D14' };
+                
+                try {
+                    const canvas = await html2canvas(element, { 
+                        backgroundColor: colors[theme],
+                        scale: 2,
+                        logging: false
+                    });
+                    const link = document.createElement('a');
+                    link.download = `Agenda-${selectedDateKey}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                } catch (e) {
+                    console.error("Image export failed", e);
+                }
+            } else {
+                const text = list.map(t => `${t.done?'[x]':'[ ]'} ${t.text}`).join('\n');
+                const blob = new Blob([`Agenda for ${selectedDateKey}\n\n${text}`], { type: 'text/plain' });
+                const link = document.createElement('a');
+                link.download = `Agenda-${selectedDateKey}.txt`;
+                link.href = window.URL.createObjectURL(blob);
+                link.click();
+            }
+        };
+
+        window.toggleTask = (idx) => { todos[selectedDateKey][idx].done = !todos[selectedDateKey][idx].done; saveTodoState(); };
+        window.removeTask = (idx) => { todos[selectedDateKey].splice(idx, 1); saveTodoState(); };
+        function saveTodoState() { localStorage.setItem('bullets_todos', JSON.stringify(todos)); renderTodoList(); renderCalendar(); }
+
+        window.execCmd = (cmd, val = null) => { document.execCommand(cmd, false, val); editor.focus(); autoSave(); };
+        editor.addEventListener('keydown', (e) => {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                document.execCommand(e.shiftKey ? 'outdent' : 'indent', false, null);
+                autoSave();
+            }
+        });
+
+        function getFallback() { return `Bullets-${new Date().getTime()}`; }
+        window.copyNotes = () => {
+            const t = titleEl.innerText.trim() || getFallback();
+            navigator.clipboard.writeText(`${t}\n\n${editor.innerText}`);
+        };
+
+        window.downloadImage = async () => {
+            const area = document.getElementById('capture-area');
+            const theme = document.body.getAttribute('data-theme');
+            const colors = { midnight: '#0F1115', snow: '#F6F6F7', forest: '#09120D', ocean: '#080D14' };
+            const oldScroll = area.scrollTop;
+            area.scrollTop = 0;
+            const canvas = await html2canvas(area, { backgroundColor: colors[theme], scale: 2 });
+            const link = document.createElement('a');
+            link.download = `${titleEl.innerText.trim() || getFallback()}.png`;
+            link.href = canvas.toDataURL('image/png'); link.click();
+            area.scrollTop = oldScroll;
+        };
+
+        window.exportToOutlook = () => {
+            const title = titleEl.innerText.trim() || getFallback();
+            const body = editor.innerText;
+            const emlContent = `Subject: ${title}\nContent-Type: text/plain; charset=utf-8\n\n${body}`;
+            const blob = new Blob([emlContent], { type: 'message/rfc822' });
+            const link = document.createElement('a');
+            link.download = `${title}.eml`;
+            link.href = window.URL.createObjectURL(blob);
+            link.click();
+        };
+
+        function initSystem() { if(!folders.find(f=>f.id==='default')) folders.unshift({id:'default', name:'Records'}); renderNavigation(); }
+        function saveState() { localStorage.setItem('bullets_notes', JSON.stringify(notes)); localStorage.setItem('bullets_folders', JSON.stringify(folders)); }
+        
+        function renderNavigation() {
+            if(currentMode==='quick') return;
+            navSection.innerHTML = '';
+            folders.forEach(f => {
+                const active = f.id === currentFolderId;
+                const fNotes = notes.filter(n => n.folderId === f.id && n.id !== 'quick_scratchpad');
+                const group = document.createElement('div');
+                group.className = `folder-group ${active?'active':''}`;
+                group.innerHTML = `<div class="folder-header" onclick="switchFolder('${f.id}')"><span class="title">${f.name}</span></div><div class="note-list" id="list-${f.id}">${active?`<div class="note-item" onclick="createNewNote('${f.id}')" style="opacity:0.5;">+ New Record</div>`:''}</div>`;
+                navSection.appendChild(group);
+                if(active) {
+                    const l = document.getElementById(`list-${f.id}`);
+                    fNotes.forEach(n => {
+                        const ni = document.createElement('div');
+                        ni.className = `note-item ${n.id===currentNoteId?'active':''}`;
+                        ni.onclick = () => loadNoteData(n.id);
+                        ni.innerHTML = `<span class="title">${n.title || 'Untitled'}</span>`;
+                        l.appendChild(ni);
+                    });
+                }
+            });
+        }
+
+        window.switchFolder = (id) => { currentFolderId = id; localStorage.setItem('bullets_current_folder', id); resumeStandard(); };
+        window.createNewNote = (fId) => { currentNoteId = Date.now().toString(); currentFolderId = fId; titleEl.innerText = ''; editor.innerHTML = '<ul><li><br></li></ul>'; editor.focus(); renderNavigation(); if (window.innerWidth <= 1024) closeAllMenus(); };
+        function loadNoteData(id) { currentNoteId = id; const n = notes.find(x=>x.id===id); if(n){ titleEl.innerText = n.title; editor.innerHTML = n.content; currentFolderId = n.folderId; } renderNavigation(); if (window.innerWidth <= 1024) closeAllMenus(); }
+
+        function autoSave() {
+            if(!currentNoteId) return;
+            const t = titleEl.innerText.trim(), c = editor.innerText.trim();
+            if(t || c) {
+                const data = { id:currentNoteId, folderId:currentFolderId, title:t, content:editor.innerHTML };
+                const idx = notes.findIndex(n=>n.id===currentNoteId);
+                if(idx === -1) notes.unshift(data); else { notes[idx] = data; }
+                saveState(); renderNavigation();
+            }
+        }
+        titleEl.addEventListener('input', autoSave); editor.addEventListener('input', autoSave);
+        window.openModal = (id) => document.getElementById(id).classList.add('active');
+        window.closeModal = (id) => document.getElementById(id).classList.remove('active');
+        window.saveUser = () => { const n = document.getElementById('user-name').value.trim(); if(n){ localStorage.setItem('app_user', JSON.stringify({name:n})); location.reload(); }};
+        window.switchUser = () => { document.getElementById('user-name').value = ''; openModal('onboarding'); };
+        window.changeTheme = (t) => { document.body.setAttribute('data-theme', t); localStorage.setItem('bullets_theme', t); };
+        window.changeFont = (f) => { document.documentElement.style.setProperty('--font-main', f); localStorage.setItem('bullets_font', f); };
+        window.confirmCreateFolder = () => { const n = document.getElementById('folder-name').value.trim(); if(n){ const f = {id:Date.now().toString(), name:n}; folders.push(f); saveState(); closeModal('folder-modal'); switchFolder(f.id); }};
+    </script>
+</body>
+</html>
