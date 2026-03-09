@@ -696,5 +696,19 @@
         window.changeFont = (f) => { document.documentElement.style.setProperty('--font-main', f); localStorage.setItem('bullets_font', f); };
         window.confirmCreateFolder = () => { const n = document.getElementById('folder-name').value.trim(); if(n){ const f = {id:Date.now().toString(), name:n}; folders.push(f); saveState(); closeModal('folder-modal'); switchFolder(f.id); }};
     </script>
+
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/bullets/sw.js', { scope: '/bullets/' })
+            .then((registration) => {
+              console.log('Service Worker registered with scope:', registration.scope);
+            })
+            .catch((error) => {
+              console.error('Service Worker registration failed:', error);
+            });
+        });
+      }
+    </script>
 </body>
 </html>
